@@ -3,6 +3,9 @@ import { normalizeExtractedStyles } from "../lib/normalize.mjs";
 import { generateDesignMarkdown } from "../lib/generate-design-md.mjs";
 import { generateSkillMarkdown } from "../lib/generate-skill-md.mjs";
 import { validateMarkdownOutput } from "../lib/validate.mjs";
+import "../lib/skills/index.mjs";
+import { listSkills } from "../lib/skills/registry.mjs";
+import { runSkills } from "../lib/skills/orchestrator.mjs";
 
 const mockPayload = {
   source: {
@@ -116,5 +119,129 @@ assert.ok(designMd.includes("- Product surface: dashboard web app"), "DESIGN.md 
 assert.ok(skillMd.includes("- Product surface: dashboard web app"), "SKILL.md should infer product surface from site signals");
 assert.ok(!designMd.includes("Audience/surface inference confidence"), "DESIGN.md should not include inference confidence text");
 assert.ok(!skillMd.includes("Audience/surface inference confidence"), "SKILL.md should not include inference confidence text");
+
+// --- Skill registry tests ---
+
+const skills = listSkills();
+const skillIds = skills.map((s) => s.id);
+assert.ok(skillIds.includes("design-tokens"), "design-tokens skill should be registered");
+assert.ok(skillIds.includes("product-surface"), "product-surface skill should be registered");
+
+// Default run (no enabledSkills filter, default outputs) must produce DESIGN.md and SKILL.md
+// byte-for-byte identical to the legacy generator output.
+const skillRun = runSkills(mockPayload, {
+  metadata: {
+    systemName: "Example DS",
+    brand: "Example"
+  }
+});
+
+assert.equal(
+  skillRun.outputs["design.md"],
+  designMd,
+  "orchestrator-produced design.md must match legacy generator output byte-for-byte"
+);
+assert.equal(
+  skillRun.outputs["skill.md"],
+  skillMd,
+  "orchestrator-produced skill.md must match legacy generator output byte-for-byte"
+);
+assert.equal(skillRun.filenames["design.md"], "DESIGN.md");
+assert.equal(skillRun.filenames["skill.md"], "SKILL.md");
+
+assert.ok(skillRun.normalized["design-tokens"], "design-tokens normalized payload should exist");
+assert.ok(skillRun.normalized["product-surface"]?.siteProfile, "product-surface should expose siteProfile");
+assert.equal(
+  skillRun.normalized["product-surface"].siteProfile.productSurface,
+  "dashboard web app",
+  "product-surface should infer dashboard web app"
+);
+
+assert.ok(skillRun.validations["design.md"]?.isValid, "DESIGN.md validation must pass via orchestrator");
+assert.ok(skillRun.validations["skill.md"]?.isValid, "SKILL.md validation must pass via orchestrator");
+assert.equal(skillRun.errors.length, 0, `orchestrator should not report errors: ${JSON.stringify(skillRun.errors)}`);
+
+// Filtering by enabledSkills must still produce the legacy output when both
+// design-tokens and product-surface are enabled (the default pair).
+const filteredRun = runSkills(mockPayload, {
+  enabledSkills: ["design-tokens", "product-surface"],
+  outputs: ["design.md", "skill.md"],
+  metadata: { systemName: "Example DS", brand: "Example" }
+});
+assert.equal(filteredRun.outputs["design.md"], designMd, "filtered run still byte-equal for design.md");
+assert.equal(filteredRun.outputs["skill.md"], skillMd, "filtered run still byte-equal for skill.md");
+
+// product-surface alone must not emit any output in phase 1.
+const onlyProductSurface = runSkills(mockPayload, {
+  enabledSkills: ["product-surface"],
+  outputs: ["design.md", "skill.md"]
+});
+assert.equal(Object.keys(onlyProductSurface.outputs).length, 0, "product-surface alone should emit nothing in phase 1");
+assert.ok(onlyProductSurface.normalized["product-surface"]?.siteProfile, "but it should still emit normalized data");
+
+// Run skill-specific test files.
+await import("./skills/design-tokens.test.mjs");
+await import("./skills/tech-stack.test.mjs");
+await import("./skills/info-architecture.test.mjs");
+await import("./skills/seo.test.mjs");
+await import("./skills/geo.test.mjs");
+
+// === Combined info.md output ordering ===
+{
+  const { runSkills } = await import("../lib/skills/orchestrator.mjs");
+  const combined = runSkills({
+    meta: { url: "https://example.com/", title: "x" },
+    skills: {
+      "info-architecture": {
+        headings: [{ level: 1, text: "Top", id: null, hasAnchorLink: false }],
+        landmarks: { main: 1, nav: 1, aside: 0, header: 1, footer: 0 },
+        navs: [{ ariaLabel: "primary", directItems: 5, depth: 1, location: "header" }],
+        linkGraph: { internal: 5, external: 1, anchor: 0, mailto: 0, tel: 0, nofollow: 0 },
+        breadcrumbs: false,
+        pagination: false,
+        urlPattern: { pathname: "/", pathDepth: 0, lastSegment: "", slugLooksDetail: false },
+        aboveTheFold: []
+      },
+      seo: {
+        source: { url: "https://example.com/", origin: "https://example.com" },
+        title: "ok title with reasonable length here",
+        metaDescription: "ok description with reasonable length so it reads naturally on every device and stays inside guidance.",
+        canonical: "https://example.com/",
+        robotsMeta: "",
+        hreflang: [],
+        openGraph: { "og:image": "https://example.com/x.png" },
+        twitter: {},
+        jsonLd: [],
+        altCoverage: { total: 0, withAlt: 0, decorative: 0 },
+        linkRatio: { internal: 5, external: 0, nofollow: 0 },
+        wordCount: 100,
+        fetched: {}
+      },
+      geo: {
+        source: { url: "https://example.com/", origin: "https://example.com" },
+        structuredData: { hasFaq: false, types: [] },
+        detailsCount: 0, summaryCount: 0, listCount: 0, tableCount: 0,
+        wordCountMain: 100, wordCountBody: 200,
+        contentToChromeRatio: 0.5,
+        definitionalOpening: null,
+        headingsTotal: 1, headingsWithAnchors: 0,
+        author: "", publishDate: "",
+        internalCitations: 0,
+        toc: { detected: false, withAnchors: false },
+        fetched: {}
+      }
+    },
+    pendingFetches: []
+  }, {
+    enabledSkills: ["info-architecture", "seo", "geo"],
+    outputs: ["info.md"]
+  });
+  const info = combined.outputs["info.md"];
+  assert.ok(info, "combined info.md should exist");
+  const ia = info.indexOf("# Information architecture");
+  const seo = info.indexOf("## SEO basics");
+  const geo = info.indexOf("## GEO (Generative Engine Optimization)");
+  assert.ok(ia >= 0 && seo > ia && geo > seo, `info.md must order info-architecture → seo → geo (got ia=${ia}, seo=${seo}, geo=${geo})`);
+}
 
 console.log("All tests passed.");
