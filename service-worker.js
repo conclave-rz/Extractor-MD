@@ -1,5 +1,6 @@
 import "./lib/skills/index.mjs";
 import { runSkills } from "./lib/skills/orchestrator.mjs";
+import { listSkills } from "./lib/skills/registry.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
 
@@ -40,6 +41,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .then((result) => sendResponse({ ok: true, ...result }))
       .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
     return true;
+  }
+
+  if (message.type === "LIST_SKILLS") {
+    try {
+      const skills = listSkills().map((s) => ({
+        id: s.id,
+        label: s.label,
+        description: s.description,
+        outputs: [...s.outputs],
+        defaultEnabled: s.defaultEnabled
+      }));
+      sendResponse({ ok: true, skills });
+    } catch (error) {
+      sendResponse({ ok: false, error: stringifyError(error) });
+    }
+    return false;
   }
 });
 
