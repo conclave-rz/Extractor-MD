@@ -2,7 +2,7 @@ import "./lib/skills/index.mjs";
 import { runSkills } from "./lib/skills/orchestrator.mjs";
 import { listSkills } from "./lib/skills/registry.mjs";
 
-const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
+const EXTRACTION_MESSAGE = "EXTRACTOR_MD_EXTRACT_STYLES";
 
 const OUTPUT_FILENAMES = {
   "design.md": "DESIGN.md",
