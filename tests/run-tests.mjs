@@ -183,5 +183,6 @@ assert.ok(onlyProductSurface.normalized["product-surface"]?.siteProfile, "but it
 await import("./skills/design-tokens.test.mjs");
 await import("./skills/tech-stack.test.mjs");
 await import("./skills/info-architecture.test.mjs");
+await import("./skills/seo.test.mjs");
 
 console.log("All tests passed.");

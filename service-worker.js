@@ -34,6 +34,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
     return true;
   }
+
+  if (message.type === "FETCH_ORIGIN_FILE") {
+    fetchOriginFile(message.url)
+      .then((result) => sendResponse({ ok: true, ...result }))
+      .catch((error) => sendResponse({ ok: false, error: stringifyError(error) }));
+    return true;
+  }
 });
 
 async function handleExtraction(message) {
@@ -42,8 +49,9 @@ async function handleExtraction(message) {
   const tab = await getActiveTab();
   await injectExtractor(tab.id);
   const payload = await requestExtractionPayload(tab.id);
+  const enrichedPayload = await resolvePendingFetches(payload);
 
-  const skillRun = runSkills(payload, {
+  const skillRun = runSkills(enrichedPayload, {
     enabledSkills,
     outputs: requestedOutputs,
     metadata: message.metadata || {}
@@ -164,6 +172,39 @@ function sanitizeOutputs(outputs, mode) {
   }
   // Default contract: build both legacy outputs.
   return ["design.md", "skill.md"];
+}
+
+async function resolvePendingFetches(payload) {
+  if (!payload || !Array.isArray(payload.pendingFetches) || payload.pendingFetches.length === 0) {
+    return payload;
+  }
+  const grouped = {};
+  await Promise.all(payload.pendingFetches.map(async (req) => {
+    const result = await fetchOriginFile(req.url);
+    if (!grouped[req.skill]) grouped[req.skill] = {};
+    grouped[req.skill][req.url] = result;
+  }));
+  if (payload.skills && typeof payload.skills === "object") {
+    for (const [skillId, fetched] of Object.entries(grouped)) {
+      const slice = payload.skills[skillId] || {};
+      slice.fetched = Object.assign({}, slice.fetched || {}, fetched);
+      payload.skills[skillId] = slice;
+    }
+  }
+  return payload;
+}
+
+async function fetchOriginFile(url) {
+  if (!url || typeof url !== "string") {
+    return { ok: false, status: 0, text: "", error: "missing url" };
+  }
+  try {
+    const res = await fetch(url, { credentials: "omit", redirect: "follow" });
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, text };
+  } catch (err) {
+    return { ok: false, status: 0, text: "", error: err && err.message ? err.message : String(err) };
+  }
 }
 
 function sanitizeSkills(enabledSkills) {
