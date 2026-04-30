@@ -182,5 +182,6 @@ assert.ok(onlyProductSurface.normalized["product-surface"]?.siteProfile, "but it
 // Run skill-specific test files.
 await import("./skills/design-tokens.test.mjs");
 await import("./skills/tech-stack.test.mjs");
+await import("./skills/info-architecture.test.mjs");
 
 console.log("All tests passed.");
