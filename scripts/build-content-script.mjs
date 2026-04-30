@@ -15,15 +15,15 @@ const HEADER = `/*
  */`;
 
 const WRAPPER_PREFIX = `(function installExtractor() {
-  const MESSAGE_TYPE = "TYPEUI_EXTRACT_STYLES";
+  const MESSAGE_TYPE = "EXTRACTOR_MD_EXTRACT_STYLES";
 
-  if (window.__typeuiStyleExtractorInstalled) {
+  if (window.__extractorMdInstalled) {
     return;
   }
-  window.__typeuiStyleExtractorInstalled = true;
+  window.__extractorMdInstalled = true;
 
   const __extractors = {};
-  function __TYPEUI_REGISTER_EXTRACTOR(id, fn) {
+  function __EXTRACTOR_MD_REGISTER_EXTRACTOR(id, fn) {
     if (typeof id !== "string" || typeof fn !== "function") return;
     __extractors[id] = fn;
   }

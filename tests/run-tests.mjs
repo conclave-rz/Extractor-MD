@@ -108,7 +108,7 @@ const skillValidation = validateMarkdownOutput("skill", skillMd);
 
 assert.ok(designValidation.isValid, `DESIGN.md should be valid: ${designValidation.errors.join(", ")}`);
 assert.ok(skillValidation.isValid, `SKILL.md should be valid: ${skillValidation.errors.join(", ")}`);
-assert.ok(skillMd.includes("TYPEUI_SH_MANAGED_START"), "SKILL.md should include managed markers");
+assert.ok(skillMd.includes("EXTRACTOR_MD_MANAGED_START"), "SKILL.md should include managed markers");
 assert.ok(designMd.includes("WCAG 2.2 AA"), "DESIGN.md should include accessibility target");
 assert.ok(designMd.includes("- URL: https://example.com/dashboard"), "DESIGN.md should include extraction URL");
 assert.ok(designMd.includes("- Main font style: `font.family.primary=Inter`"), "DESIGN.md should include inferred main font style");

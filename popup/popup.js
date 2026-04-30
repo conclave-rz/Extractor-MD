@@ -8,9 +8,9 @@ const ALL_OUTPUTS = [
 ];
 
 const QUICK_INSTALL_PROVIDERS = {
-  claude: { label: "Claude Code", baseDir: ".claude/skills/typeui" },
-  codex: { label: "Codex", baseDir: ".agents/skills/typeui" },
-  cursor: { label: "Cursor", baseDir: ".cursor/skills/typeui" }
+  claude: { label: "Claude Code", baseDir: ".claude/skills/extractor-md" },
+  codex: { label: "Codex", baseDir: ".agents/skills/extractor-md" },
+  cursor: { label: "Cursor", baseDir: ".cursor/skills/extractor-md" }
 };
 
 const state = {

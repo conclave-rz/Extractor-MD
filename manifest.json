@@ -1,9 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "DESIGN.md Style Extractor - TypeUI",
-  "description": "Extract page styles, tech stack, info architecture, SEO, and GEO signals into DESIGN.md / SKILL.md / STACK.md / INFO.md.",
-  "version": "0.5.0",
-  "homepage_url": "https://www.typeui.sh",
+  "name": "Extractor MD",
+  "description": "Multi-skill pipeline para extraer DESIGN.md, SKILL.md, STACK.md e INFO.md desde cualquier sitio web.",
+  "version": "0.5.1",
   "permissions": [
     "activeTab",
     "scripting",
@@ -14,7 +13,7 @@
     "<all_urls>"
   ],
   "action": {
-    "default_title": "DESIGN.md Style Extractor - TypeUI",
+    "default_title": "Extractor MD",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "assets/icons/icon16.png",

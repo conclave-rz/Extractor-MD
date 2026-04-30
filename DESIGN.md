@@ -48,7 +48,7 @@ plano con tres ganchos de ciclo de vida:
   // Corre EN la página (contexto del content script). El bundler
   // scripts/build-content-script.mjs lo incluye en dist/content-script.js.
   // Cada extractor de browser se registra con
-  // __TYPEUI_REGISTER_EXTRACTOR(id, fn).
+  // __EXTRACTOR_MD_REGISTER_EXTRACTOR(id, fn).
   run(doc, win) -> RawSignals,
 
   // Corre en el service worker / tests de Node. Recibe las señales
@@ -118,8 +118,8 @@ necesite un fetch arbitrario.
 `lib/skills/<id>/extract.browser.js` en orden alfabético y los
 concatena dentro de un wrapper IIFE que:
 
-1. resguarda `window.__typeuiStyleExtractorInstalled`,
-2. define `__TYPEUI_REGISTER_EXTRACTOR(id, fn)`,
+1. resguarda `window.__extractorMdInstalled`,
+2. define `__EXTRACTOR_MD_REGISTER_EXTRACTOR(id, fn)`,
 3. instala un listener `chrome.runtime.onMessage` que ejecuta cada
    extractor registrado y responde con
    `{ meta, skills: { id: rawData }, pendingFetches: [...] }`.
@@ -167,7 +167,7 @@ name: design-system-[brand-or-scope]
 description: Creates implementation-ready design-system guidance with tokens, component behavior, and accessibility standards.
 ---
 
-<!-- TYPEUI_SH_MANAGED_START -->
+<!-- EXTRACTOR_MD_MANAGED_START -->
 
 # [Design System Name]
 
@@ -233,7 +233,7 @@ concise, confident, implementation-focused
 - Every accessibility rule is testable in implementation.
 - Prefer system consistency over local visual exceptions.
 
-<!-- TYPEUI_SH_MANAGED_END -->
+<!-- EXTRACTOR_MD_MANAGED_END -->
 ```
 
 > Los textos del bloque (Mission, Brand, Style Foundations, etc.) se
