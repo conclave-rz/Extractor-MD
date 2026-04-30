@@ -1,0 +1,11 @@
+{
+  "name": "design-md-chrome",
+  "version": "0.5.0",
+  "description": "Chrome extension that extracts page styles into DESIGN.md / SKILL.md / STACK.md / INFO.md via a skill-based pipeline.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-content-script.mjs",
+    "test": "node tests/run-tests.mjs"
+  }
+}

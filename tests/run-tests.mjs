@@ -179,4 +179,7 @@ const onlyProductSurface = runSkills(mockPayload, {
 assert.equal(Object.keys(onlyProductSurface.outputs).length, 0, "product-surface alone should emit nothing in phase 1");
 assert.ok(onlyProductSurface.normalized["product-surface"]?.siteProfile, "but it should still emit normalized data");
 
+// Run skill-specific test files.
+await import("./skills/design-tokens.test.mjs");
+
 console.log("All tests passed.");

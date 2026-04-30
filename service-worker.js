@@ -108,10 +108,20 @@ async function getActiveTab() {
 }
 
 async function injectExtractor(tabId) {
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    files: ["content-script.js"]
-  });
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["dist/content-script.js"]
+    });
+  } catch (error) {
+    const msg = error && error.message ? error.message : String(error);
+    if (/no such file|not found/i.test(msg)) {
+      throw new Error(
+        "dist/content-script.js is missing. Run `npm run build` before loading the extension."
+      );
+    }
+    throw error;
+  }
 }
 
 function requestExtractionPayload(tabId) {
