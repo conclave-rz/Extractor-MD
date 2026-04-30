@@ -1,86 +1,88 @@
-# TypeUI DESIGN.md Extractor (Chrome Extension)
+# Extractor TypeUI DESIGN.md (Extensión de Chrome)
 
-A Chrome extension (Manifest V3) that runs a multi-skill pipeline against any
-page and emits up to four documents: `DESIGN.md`, `SKILL.md`, `STACK.md`, and
-`INFO.md`. The output formats follow the open-source
-[TypeUI DESIGN.md](https://www.typeui.sh/design-md) format and a coordinated
-information-architecture / SEO / GEO blueprint.
+Extensión de Chrome (Manifest V3) que ejecuta una pipeline multi-skill sobre
+cualquier página y genera hasta cuatro archivos: `DESIGN.md`, `SKILL.md`,
+`STACK.md` e `INFO.md`. Los formatos siguen la especificación open-source de
+[TypeUI DESIGN.md](https://www.typeui.sh/design-md), más un blueprint
+coordinado de arquitectura de información, SEO y GEO.
 
 <img width="1200" height="630" alt="designmdchrome" src="https://github.com/user-attachments/assets/64efbebb-1c68-4ca1-8792-ca167d5e12d6" />
 
-## Getting started
+## Cómo empezar
 
 ```bash
-npm run build       # produces dist/content-script.js
+npm run build       # genera dist/content-script.js
 ```
 
-Then load the extension:
+Después, carga la extensión:
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked**
-4. Select this project folder
+1. Abre `chrome://extensions`
+2. Activa el **Modo de desarrollador**
+3. Haz clic en **Cargar descomprimida**
+4. Selecciona la carpeta del proyecto
 
-> The extension injects `dist/content-script.js`, so `npm run build` must run
-> at least once before the first use, and again whenever you change a
-> `lib/skills/*/extract.browser.js` file.
+> La extensión inyecta `dist/content-script.js`, así que `npm run build`
+> debe ejecutarse al menos una vez antes del primer uso, y cada vez que
+> modifiques algún `lib/skills/*/extract.browser.js`.
 
-## Skills
+## Skills incluidas
 
-Each skill is a self-contained module that contributes signals to one or more
-output files.
+Cada skill es un módulo autocontenido que aporta señales a uno o más
+archivos de salida.
 
-| Skill | Output(s) | What it captures |
+| Skill | Archivo(s) | Qué captura |
 | --- | --- | --- |
-| `design-tokens` | DESIGN.md, SKILL.md | Typography scale, color palette (with OKLab clustering), spacing, radius, shadows (composite), motion, CSS custom properties, breakpoints, font-faces, dark-mode hints. |
-| `product-surface` | (DESIGN.md / SKILL.md, embedded) | Audience and product surface inferred from headings, nav, CTAs, and metadata. |
-| `tech-stack` | STACK.md | Frameworks (Next.js, Nuxt, Remix, SvelteKit, Astro, Solid, Qwik), UI libraries (React, Vue, Angular), CSS frameworks (Tailwind, Bootstrap, MUI, Chakra, Bulma), CMS / builders, bundlers, analytics, font hosts. |
-| `info-architecture` | INFO.md | Heading tree, landmarks, per-`<nav>` structure, link graph, breadcrumbs, pagination, URL pattern, above-the-fold sections, hierarchy validations. |
-| `seo` | INFO.md | Title and description ranges, canonical, robots, hreflang, Open Graph, Twitter cards, JSON-LD parsing, image alt coverage, link ratio, word count, robots.txt / sitemap.xml fetches. |
-| `geo` | INFO.md | Generative-engine optimization score (0–100): `llms.txt`, FAQPage schema, definitional opening, table of contents, lists/tables density, content-to-chrome ratio, author + publish date, internal citations. |
+| `design-tokens` | DESIGN.md, SKILL.md | Escala tipográfica, paleta de color (con clustering OKLab), spacing, radius, sombras compuestas, motion, propiedades CSS personalizadas, breakpoints, font-faces, indicios de modo oscuro. |
+| `product-surface` | (DESIGN.md / SKILL.md, embebido) | Audiencia y superficie de producto inferidas a partir de headings, navegación, CTAs y metadatos. |
+| `tech-stack` | STACK.md | Frameworks (Next.js, Nuxt, Remix, SvelteKit, Astro, Solid, Qwik), librerías UI (React, Vue, Angular), frameworks CSS (Tailwind, Bootstrap, MUI, Chakra, Bulma), CMS / builders, bundlers, analytics, hosts de fuentes. |
+| `info-architecture` | INFO.md | Árbol de headings, landmarks, estructura por `<nav>`, link graph, breadcrumbs, paginación, patrón de URL, secciones above-the-fold, validaciones de jerarquía. |
+| `seo` | INFO.md | Title y description con rangos, canonical, robots, hreflang, Open Graph, Twitter Cards, parsing de JSON-LD, cobertura de alt en imágenes, ratio de enlaces, conteo de palabras, fetch de robots.txt y sitemap.xml. |
+| `geo` | INFO.md | Score de optimización para motores generativos (0–100): `llms.txt`, schema FAQPage, párrafo definicional, tabla de contenidos, densidad de listas y tablas, ratio contenido vs cromo, autor y fecha, citas internas. |
 
-## Outputs
+## Archivos de salida
 
-| File | Contributing skills | Use it for |
+| Archivo | Skills que lo alimentan | Para qué sirve |
 | --- | --- | --- |
-| `DESIGN.md` | design-tokens (+ product-surface) | Design-system source-of-truth for AI codegen tools. |
-| `SKILL.md` | design-tokens (+ product-surface) | Drop-in skill file for Claude Code, Codex, or Cursor. |
-| `STACK.md` | tech-stack | Quick reference of the page's tech footprint. |
-| `INFO.md` | info-architecture, seo, geo | Information-architecture audit + SEO/GEO scorecard. |
+| `DESIGN.md` | design-tokens (+ product-surface) | Documento source-of-truth del sistema de diseño para herramientas de codegen con IA. |
+| `SKILL.md` | design-tokens (+ product-surface) | Archivo skill listo para Claude Code, Codex o Cursor. |
+| `STACK.md` | tech-stack | Referencia rápida del stack técnico de la página. |
+| `INFO.md` | info-architecture, seo, geo | Auditoría de arquitectura de información + scorecard de SEO/GEO. |
 
-The popup lets you toggle outputs and skills independently, persists the
-choice in `chrome.storage.local`, and tabs between every produced file.
-"Quick install" writes every selected output into the project folder of
-your choice (`.claude/skills/typeui/`, `.agents/skills/typeui/`,
+El popup permite activar outputs y skills de forma independiente,
+persiste la selección en `chrome.storage.local`, y muestra una pestaña
+por cada archivo generado. El botón **Quick install** escribe todos los
+archivos seleccionados dentro de la carpeta del proyecto que elijas
+(`.claude/skills/typeui/`, `.agents/skills/typeui/`,
 `.cursor/skills/typeui/`).
 
-## Adding a new skill
+## Cómo agregar una skill nueva
 
-A skill is described in [`lib/skills/types.mjs`](lib/skills/types.mjs).
-Minimum scaffold:
+El contrato está documentado en
+[`lib/skills/types.mjs`](lib/skills/types.mjs). Estructura mínima:
 
 ```
-lib/skills/<skill-id>/
-├── extract.browser.js   # runs in the page (registers via __TYPEUI_REGISTER_EXTRACTOR)
-├── normalize.mjs        # runs in service worker / Node tests
-├── section.mjs          # returns { heading, body, anchor, sectionOrder } per outputId
-└── index.mjs            # exports the Skill object
+lib/skills/<id-de-skill>/
+├── extract.browser.js   # corre en la página (se registra con __TYPEUI_REGISTER_EXTRACTOR)
+├── normalize.mjs        # corre en el service worker / tests de Node
+├── section.mjs          # devuelve { heading, body, anchor, sectionOrder } por outputId
+└── index.mjs            # exporta el objeto Skill
 ```
 
-Register the skill in [`lib/skills/index.mjs`](lib/skills/index.mjs) and
-re-run `npm run build` so its `extract.browser.js` is bundled into
-`dist/content-script.js`. See `lib/skills/tech-stack/` for a concrete example.
+Registra la skill en [`lib/skills/index.mjs`](lib/skills/index.mjs) y
+vuelve a correr `npm run build` para que su `extract.browser.js` se
+incluya en `dist/content-script.js`. Usa `lib/skills/tech-stack/` como
+referencia.
 
-## Local development
+## Desarrollo local
 
 ```bash
-npm run build           # bundle content script
-npm test                # run all tests (Node 20+)
+npm run build           # bundlea el content script
+npm test                # corre todos los tests (Node 20+)
 ```
 
-Tests live under `tests/` and use `node:assert/strict`. Skill-specific
-suites are in `tests/skills/`.
+Los tests viven en `tests/` y usan `node:assert/strict`. Las suites por
+skill están en `tests/skills/`.
 
-## License
+## Licencia
 
 MIT.
