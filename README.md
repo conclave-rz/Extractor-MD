@@ -16,6 +16,19 @@ agentes similares. Construido sobre el formato open-source DESIGN.md.
 4. Activa el **Modo de desarrollador**.
 5. **Cargar descomprimida** → selecciona la carpeta del repositorio.
 
+## Icono
+
+Coloca tu archivo de icono fuente en `assets/icons/source/icon-source.png`
+(cualquier tamaño cuadrado, preferentemente 256x256 o más) y ejecuta:
+
+```bash
+npm run icons
+```
+
+El script detecta `sharp` o `imagemagick` en el sistema; si nada está
+disponible, copia el fuente como placeholder en cada tamaño. Genera
+`assets/icons/icon{16,32,48,128}.png`.
+
 ## Outputs
 
 | Archivo | Contenido |
