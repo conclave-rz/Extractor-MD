@@ -184,5 +184,64 @@ await import("./skills/design-tokens.test.mjs");
 await import("./skills/tech-stack.test.mjs");
 await import("./skills/info-architecture.test.mjs");
 await import("./skills/seo.test.mjs");
+await import("./skills/geo.test.mjs");
+
+// === Combined info.md output ordering ===
+{
+  const { runSkills } = await import("../lib/skills/orchestrator.mjs");
+  const combined = runSkills({
+    meta: { url: "https://example.com/", title: "x" },
+    skills: {
+      "info-architecture": {
+        headings: [{ level: 1, text: "Top", id: null, hasAnchorLink: false }],
+        landmarks: { main: 1, nav: 1, aside: 0, header: 1, footer: 0 },
+        navs: [{ ariaLabel: "primary", directItems: 5, depth: 1, location: "header" }],
+        linkGraph: { internal: 5, external: 1, anchor: 0, mailto: 0, tel: 0, nofollow: 0 },
+        breadcrumbs: false,
+        pagination: false,
+        urlPattern: { pathname: "/", pathDepth: 0, lastSegment: "", slugLooksDetail: false },
+        aboveTheFold: []
+      },
+      seo: {
+        source: { url: "https://example.com/", origin: "https://example.com" },
+        title: "ok title with reasonable length here",
+        metaDescription: "ok description with reasonable length so it reads naturally on every device and stays inside guidance.",
+        canonical: "https://example.com/",
+        robotsMeta: "",
+        hreflang: [],
+        openGraph: { "og:image": "https://example.com/x.png" },
+        twitter: {},
+        jsonLd: [],
+        altCoverage: { total: 0, withAlt: 0, decorative: 0 },
+        linkRatio: { internal: 5, external: 0, nofollow: 0 },
+        wordCount: 100,
+        fetched: {}
+      },
+      geo: {
+        source: { url: "https://example.com/", origin: "https://example.com" },
+        structuredData: { hasFaq: false, types: [] },
+        detailsCount: 0, summaryCount: 0, listCount: 0, tableCount: 0,
+        wordCountMain: 100, wordCountBody: 200,
+        contentToChromeRatio: 0.5,
+        definitionalOpening: null,
+        headingsTotal: 1, headingsWithAnchors: 0,
+        author: "", publishDate: "",
+        internalCitations: 0,
+        toc: { detected: false, withAnchors: false },
+        fetched: {}
+      }
+    },
+    pendingFetches: []
+  }, {
+    enabledSkills: ["info-architecture", "seo", "geo"],
+    outputs: ["info.md"]
+  });
+  const info = combined.outputs["info.md"];
+  assert.ok(info, "combined info.md should exist");
+  const ia = info.indexOf("# Information architecture");
+  const seo = info.indexOf("## SEO basics");
+  const geo = info.indexOf("## GEO (Generative Engine Optimization)");
+  assert.ok(ia >= 0 && seo > ia && geo > seo, `info.md must order info-architecture → seo → geo (got ia=${ia}, seo=${seo}, geo=${geo})`);
+}
 
 console.log("All tests passed.");
