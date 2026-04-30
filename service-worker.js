@@ -1,9 +1,14 @@
-import { normalizeExtractedStyles } from "./lib/normalize.mjs";
-import { generateDesignMarkdown } from "./lib/generate-design-md.mjs";
-import { generateSkillMarkdown } from "./lib/generate-skill-md.mjs";
-import { validateMarkdownOutput } from "./lib/validate.mjs";
+import "./lib/skills/index.mjs";
+import { runSkills } from "./lib/skills/orchestrator.mjs";
 
 const EXTRACTION_MESSAGE = "TYPEUI_EXTRACT_STYLES";
+
+const OUTPUT_FILENAMES = {
+  "design.md": "DESIGN.md",
+  "skill.md": "SKILL.md",
+  "stack.md": "STACK.md",
+  "info.md": "INFO.md"
+};
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -32,36 +37,44 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function handleExtraction(message) {
-  const mode = message.mode === "skill" ? "skill" : "design";
+  const requestedOutputs = sanitizeOutputs(message.outputs, message.mode);
+  const enabledSkills = sanitizeSkills(message.enabledSkills);
   const tab = await getActiveTab();
   await injectExtractor(tab.id);
   const payload = await requestExtractionPayload(tab.id);
-  const normalized = normalizeExtractedStyles(payload);
 
-  const context = {
-    normalized
-  };
+  const skillRun = runSkills(payload, {
+    enabledSkills,
+    outputs: requestedOutputs,
+    metadata: message.metadata || {}
+  });
 
-  const markdown =
-    mode === "skill"
-      ? generateSkillMarkdown(context)
-      : generateDesignMarkdown(context);
+  // Legacy single-mode contract used by the current popup.
+  const legacyMode = message.mode === "skill" ? "skill" : "design";
+  const legacyOutputId = legacyMode === "skill" ? "skill.md" : "design.md";
+  const legacyMarkdown = skillRun.outputs[legacyOutputId] || "";
+  const legacyFilename = OUTPUT_FILENAMES[legacyOutputId];
+  const legacyValidation = skillRun.validations[legacyOutputId] || null;
+  const designTokensNormalized = skillRun.normalized["design-tokens"] || null;
 
-  const validation = validateMarkdownOutput(mode, markdown);
-  const filename = mode === "skill" ? "SKILL.md" : "DESIGN.md";
-
-  if (message.persistOutputMode !== false) {
+  if (message.persistOutputMode !== false && message.mode) {
     await chrome.storage.local.set({
-      outputMode: mode
+      outputMode: legacyMode
     });
   }
 
   return {
-    mode,
-    filename,
-    markdown,
-    normalized,
-    validation
+    mode: legacyMode,
+    filename: legacyFilename,
+    markdown: legacyMarkdown,
+    normalized: designTokensNormalized,
+    validation: legacyValidation,
+    outputs: skillRun.outputs,
+    filenames: skillRun.filenames,
+    validations: skillRun.validations,
+    diagnostics: skillRun.diagnostics,
+    skillsNormalized: skillRun.normalized,
+    skillErrors: skillRun.errors
   };
 }
 
@@ -122,6 +135,32 @@ function stringifyError(error) {
     return error.message;
   }
   return String(error || "Unknown error");
+}
+
+function sanitizeOutputs(outputs, mode) {
+  if (Array.isArray(outputs) && outputs.length > 0) {
+    const allowed = ["design.md", "skill.md", "stack.md", "info.md"];
+    const filtered = outputs.filter((id) => typeof id === "string" && allowed.includes(id));
+    if (filtered.length > 0) {
+      return Array.from(new Set(filtered));
+    }
+  }
+  // Legacy single-mode fallback.
+  if (mode === "skill") {
+    return ["skill.md"];
+  }
+  if (mode === "design") {
+    return ["design.md"];
+  }
+  // Default contract: build both legacy outputs.
+  return ["design.md", "skill.md"];
+}
+
+function sanitizeSkills(enabledSkills) {
+  if (Array.isArray(enabledSkills) && enabledSkills.length > 0) {
+    return enabledSkills.filter((id) => typeof id === "string" && id.length > 0);
+  }
+  return undefined;
 }
 
 function normalizeMarkdownFilename(inputName, mode) {
