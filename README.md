@@ -1,59 +1,86 @@
 # TypeUI DESIGN.md Extractor (Chrome Extension)
 
-This Chrome extension extract styles and information from any given site and generates a `DESIGN.md` or `SKILL.md` file that you can use with tools such as Google Stitch, Claude Code, Codex, and others to build websites with a given design system blueprint. The file is based on the open-source [TypeUI DESIGN.md](https://www.typeui.sh/design-md) format.
+A Chrome extension (Manifest V3) that runs a multi-skill pipeline against any
+page and emits up to four documents: `DESIGN.md`, `SKILL.md`, `STACK.md`, and
+`INFO.md`. The output formats follow the open-source
+[TypeUI DESIGN.md](https://www.typeui.sh/design-md) format and a coordinated
+information-architecture / SEO / GEO blueprint.
 
 <img width="1200" height="630" alt="designmdchrome" src="https://github.com/user-attachments/assets/64efbebb-1c68-4ca1-8792-ca167d5e12d6" />
 
 ## Getting started
 
-Load the extension in Chrome:
+```bash
+npm run build       # produces dist/content-script.js
+```
+
+Then load the extension:
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked**
 4. Select this project folder
 
-## Curated design skills
+> The extension injects `dist/content-script.js`, so `npm run build` must run
+> at least once before the first use, and again whenever you change a
+> `lib/skills/*/extract.browser.js` file.
 
-Check out curated design systems at [typeui.sh/design-skills](https://www.typeui.sh/design-skills).
+## Skills
 
-## Available actions
+Each skill is a self-contained module that contributes signals to one or more
+output files.
 
-| Action | Description |
-| --- | --- |
-| Auto-extract | Reads styles from the active tab (typography, colors, spacing, radius, shadows, motion). |
-| Generate `DESIGN.md` | Produces design-system documentation markdown from extracted signals. |
-| Generate `SKILL.md` | Produces agent-ready skill markdown from extracted signals. |
-| Refresh | Re-runs extraction for the current page state. |
-| Download | Saves generated output as `DESIGN.md` or `SKILL.md`. |
-| Explain (`?`) | Shows how the file was generated, with TypeUI reference. |
+| Skill | Output(s) | What it captures |
+| --- | --- | --- |
+| `design-tokens` | DESIGN.md, SKILL.md | Typography scale, color palette (with OKLab clustering), spacing, radius, shadows (composite), motion, CSS custom properties, breakpoints, font-faces, dark-mode hints. |
+| `product-surface` | (DESIGN.md / SKILL.md, embedded) | Audience and product surface inferred from headings, nav, CTAs, and metadata. |
+| `tech-stack` | STACK.md | Frameworks (Next.js, Nuxt, Remix, SvelteKit, Astro, Solid, Qwik), UI libraries (React, Vue, Angular), CSS frameworks (Tailwind, Bootstrap, MUI, Chakra, Bulma), CMS / builders, bundlers, analytics, font hosts. |
+| `info-architecture` | INFO.md | Heading tree, landmarks, per-`<nav>` structure, link graph, breadcrumbs, pagination, URL pattern, above-the-fold sections, hierarchy validations. |
+| `seo` | INFO.md | Title and description ranges, canonical, robots, hreflang, Open Graph, Twitter cards, JSON-LD parsing, image alt coverage, link ratio, word count, robots.txt / sitemap.xml fetches. |
+| `geo` | INFO.md | Generative-engine optimization score (0–100): `llms.txt`, FAQPage schema, definitional opening, table of contents, lists/tables density, content-to-chrome ratio, author + publish date, internal citations. |
 
-## Generated file structure
+## Outputs
 
-The generated markdown follows this structure:
+| File | Contributing skills | Use it for |
+| --- | --- | --- |
+| `DESIGN.md` | design-tokens (+ product-surface) | Design-system source-of-truth for AI codegen tools. |
+| `SKILL.md` | design-tokens (+ product-surface) | Drop-in skill file for Claude Code, Codex, or Cursor. |
+| `STACK.md` | tech-stack | Quick reference of the page's tech footprint. |
+| `INFO.md` | info-architecture, seo, geo | Information-architecture audit + SEO/GEO scorecard. |
 
-| Section | What it does |
-| --- | --- |
-| `Mission` | Defines the design-system objective for the extracted site. |
-| `Brand` | Captures product/brand context, URL, audience, and product surface. |
-| `Style Foundations` | Lists inferred visual tokens and foundations. |
-| `Accessibility` | Applies WCAG 2.2 AA requirements and interaction constraints. |
-| `Writing Tone` | Sets guidance tone for implementation-ready output. |
-| `Rules: Do` | Lists required implementation practices. |
-| `Rules: Don't` | Lists anti-patterns and prohibited behavior. |
-| `Guideline Authoring Workflow` | Defines ordered guideline authoring steps. |
-| `Required Output Structure` | Enforces consistent output sections. |
-| `Component Rule Expectations` | Defines required interaction/state details. |
-| `Quality Gates` | Adds testable quality and consistency checks. |
+The popup lets you toggle outputs and skills independently, persists the
+choice in `chrome.storage.local`, and tabs between every produced file.
+"Quick install" writes every selected output into the project folder of
+your choice (`.claude/skills/typeui/`, `.agents/skills/typeui/`,
+`.cursor/skills/typeui/`).
+
+## Adding a new skill
+
+A skill is described in [`lib/skills/types.mjs`](lib/skills/types.mjs).
+Minimum scaffold:
+
+```
+lib/skills/<skill-id>/
+├── extract.browser.js   # runs in the page (registers via __TYPEUI_REGISTER_EXTRACTOR)
+├── normalize.mjs        # runs in service worker / Node tests
+├── section.mjs          # returns { heading, body, anchor, sectionOrder } per outputId
+└── index.mjs            # exports the Skill object
+```
+
+Register the skill in [`lib/skills/index.mjs`](lib/skills/index.mjs) and
+re-run `npm run build` so its `extract.browser.js` is bundled into
+`dist/content-script.js`. See `lib/skills/tech-stack/` for a concrete example.
 
 ## Local development
 
-Run tests locally:
-
 ```bash
-node tests/run-tests.mjs
+npm run build           # bundle content script
+npm test                # run all tests (Node 20+)
 ```
+
+Tests live under `tests/` and use `node:assert/strict`. Skill-specific
+suites are in `tests/skills/`.
 
 ## License
 
-This project is open-source under the MIT License.
+MIT.
